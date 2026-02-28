@@ -1,0 +1,151 @@
+<!DOCTYPE html><html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jashim Digital Shop</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:#fff8dc}
+header{background:#5c4033;color:#fff;padding:15px;text-align:center;font-size:22px;font-weight:bold}
+section{padding:20px}
+h2{color:#5c4033}
+.card{background:#fff;padding:15px;margin:12px 0;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1)}
+button{background:green;color:#fff;border:none;padding:10px 14px;border-radius:8px;margin-top:6px;font-weight:bold}
+button:hover{opacity:.9}
+input,select{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc}
+.bottom-nav{position:fixed;bottom:0;width:100%;background:yellow;display:flex;justify-content:space-around;padding:12px 0;font-weight:bold;z-index:999}
+.bottom-nav a{text-decoration:none;color:#000}
+.whatsapp{position:fixed;right:15px;bottom:80px;background:#25D366;color:#fff;padding:16px;border-radius:50%;text-decoration:none;font-weight:bold}
+.admin-btn{position:fixed;left:15px;bottom:80px;background:#000;color:#fff;padding:12px;border-radius:10px;font-size:13px}
+#adminPanel{display:none;background:#f1f1f1;padding:15px;border-radius:12px}
+img{max-width:100%;border-radius:10px;margin-top:8px}
+.delete-btn{background:red;margin-left:8px}
+.badge{background:#5c4033;color:white;padding:4px 8px;border-radius:6px;font-size:12px}
+</style>
+</head>
+<body><header>Jashim Digital Shop</header><section id="home">
+<h2>Welcome</h2>
+<p>Clothes, Cosmetics & Digital Services. Order easily via WhatsApp.</p>
+</section><section id="products">
+<h2>🛍 Products <span class="badge" id="totalProducts">0</span></h2>
+<div id="productList"></div>
+</section><section id="order">
+<h2>📦 Order Form</h2>
+<div class="card">
+<input type="text" id="customerName" placeholder="Your Name" required>
+<input type="text" id="customerPhone" placeholder="Your Phone Number" required>
+<input type="number" id="quantity" placeholder="Quantity (e.g. 1,2,3)" value="1" min="1">
+<select id="location">
+<option value="50">Kutupalong - Delivery 50 Tk</option>
+<option value="80">Balukhali/Tankhali - Delivery 80 Tk</option>
+<option value="100">Teknaf Area - Delivery 100 Tk</option>
+</select>
+<input type="hidden" id="selectedProduct">
+<input type="hidden" id="selectedPrice">
+<button onclick="sendOrder()">Confirm Order (WhatsApp)</button>
+</div>
+</section><section id="services">
+<h2>💻 Digital Services</h2>
+<div class="card">
+<p>✔ Website Design</p>
+<p>✔ Facebook Page Setup</p>
+<p>✔ Online Business Setup</p>
+</div>
+</section><section id="contact">
+<h2>📞 Contact</h2>
+<p><b>WhatsApp:</b> 01804449309</p>
+<p><b>Email:</b> jk0641622@gmail.com</p>
+<p><b>Address:</b> Musara CNG Station</p>
+<p><b>Facebook:</b> <a href="https://www.facebook.com/share/18MkHXSxt4/" target="_blank">Visit Facebook Page</a></p>
+</section><section id="adminPanel">
+<h2>🔐 Admin Panel (Upload Products)</h2>
+<input type="text" id="pName" placeholder="Product Name (Clothes/Cosmetics)">
+<input type="number" id="pPrice" placeholder="Product Price (Tk)">
+<input type="file" id="pImage" accept="image/*">
+<button onclick="addProduct()">Upload Product</button>
+</section><a class="whatsapp" href="https://wa.me/8801804449309" target="_blank">WA</a>
+
+<div class="admin-btn" onclick="adminLogin()">Admin</div><div class="bottom-nav">
+<a href="#home">Home</a>
+<a href="#products">Products</a>
+<a href="#order">Order</a>
+<a href="#services">Services</a>
+<a href="#contact">Contact</a>
+</div><script>
+let products = JSON.parse(localStorage.getItem('products')) || [];
+
+function generateOrderID(){
+return 'JDS-' + Math.floor(100000 + Math.random() * 900000);
+}
+
+function displayProducts(){
+let list = document.getElementById('productList');
+let total = document.getElementById('totalProducts');
+list.innerHTML='';
+total.innerText = products.length;
+products.forEach((p,i)=>{
+list.innerHTML += `<div class="card"><h3>${p.name}</h3><img src="${p.image}"><p><b>Price:</b> ${p.price} Tk</p><button onclick="selectProduct(${i})">Order Now</button><button class="delete-btn" onclick="deleteProduct(${i})">Delete</button></div>`;
+});
+}
+
+function addProduct(){
+let name=document.getElementById('pName').value;
+let price=document.getElementById('pPrice').value;
+let file=document.getElementById('pImage').files[0];
+if(!name || !price || !file){alert('Please fill all product details');return;}
+let reader=new FileReader();
+reader.onload=function(){
+products.push({name:name,price:parseInt(price),image:reader.result});
+localStorage.setItem('products',JSON.stringify(products));
+displayProducts();
+alert('Product Uploaded Successfully');
+};
+reader.readAsDataURL(file);
+}
+
+function deleteProduct(index){
+if(confirm('Delete this product?')){
+products.splice(index,1);
+localStorage.setItem('products',JSON.stringify(products));
+displayProducts();
+}
+}
+
+function selectProduct(i){
+document.getElementById('selectedProduct').value=products[i].name;
+document.getElementById('selectedPrice').value=products[i].price;
+window.location='#order';
+alert('Product Selected: ' + products[i].name);
+}
+
+function sendOrder(){
+let name=document.getElementById('customerName').value;
+let phone=document.getElementById('customerPhone').value;
+let qty=parseInt(document.getElementById('quantity').value) || 1;
+let location=document.getElementById('location');
+let delivery=parseInt(location.value);
+let areaText=location.options[location.selectedIndex].text;
+let product=document.getElementById('selectedProduct').value;
+let price=parseInt(document.getElementById('selectedPrice').value);
+if(!product || !price){alert('Please select a product first');return;}
+if(!name || !phone){alert('Please enter name and phone');return;}
+let productTotal = price * qty;
+let total = productTotal + delivery;
+let orderID = generateOrderID();
+let message = `🛒 New Order - ${orderID}%0A%0A👤 Name: ${name}%0A📞 Phone: ${phone}%0A📦 Product: ${product}%0A🔢 Quantity: ${qty}%0A💰 Product Total: ${productTotal} Tk%0A🚚 Delivery: ${areaText}%0A💵 Grand Total: ${total} Tk%0A📍 Address: Musara CNG Station`;
+let whatsappURL = `https://wa.me/8801804449309?text=${encodeURIComponent(message)}`;
+window.open(whatsappURL, '_blank');
+}
+
+function adminLogin(){
+let pass=prompt('Enter Admin Password');
+if(pass==='Jashim123@#$'){
+document.getElementById('adminPanel').style.display='block';
+alert('Admin Panel Opened');
+}else{
+alert('Wrong Password');
+}
+}
+
+displayProducts();
+</script></body>
+</html>
